@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Game Interaktif: Bilangan Bulat</title>
+<style>
+  :root{
+    --bg:#f6fbff; --card:#ffffff; --muted:#6b7280;
+    --accent:#2563eb; --success:#16a34a; --danger:#dc2626;
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; margin:0; background:var(--bg); color:#0f172a;}
+  .container{max-width:980px;margin:28px auto;padding:20px;}
+  header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  h1{font-size:20px;margin:0}
+  p.lead{margin:4px 0 0;color:var(--muted);font-size:14px}
+  .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(2,6,23,0.06);margin-bottom:16px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:10px;border:0;cursor:pointer}
+  .btn.secondary{background:#e2e8f0;color:#0f172a}
+  .btn.danger{background:var(--danger)}
+  .flex{display:flex;gap:12px;align-items:center}
+  .stat{display:flex;gap:12px;align-items:center}
+  .stat .bubble{background:#eef2ff;color:var(--accent);padding:6px 10px;border-radius:8px;font-weight:600}
+  .game-area{min-height:260px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center}
+  .question{font-size:18px;font-weight:600}
+  .visual{width:100%;max-width:720px;background:linear-gradient(180deg,#ffffff,#f8fafc);border-radius:10px;padding:14px;box-shadow:inset 0 0 0 1px rgba(2,6,23,0.03);display:flex;flex-direction:column;gap:8px;align-items:center}
+  .numberline{width:100%;height:64px;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px}
+  .tick{font-size:12px;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .tick .dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e6eefc;color:var(--accent);font-weight:700}
+  .lift{width:120px;height:120px;border:4px solid #c7d2fe;border-radius:12px;position:relative;overflow:hidden;background:#fff}
+  .lift .car{position:absolute;left:6px;right:6px;height:40px;background:#60a5fa;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;transition:transform 600ms cubic-bezier(.2,.9,.2,1)}
+  .termometer{width:64px;height:200px;position:relative;display:flex;align-items:flex-end;gap:10px}
+  .thermo-tube{width:18px;height:160px;border-radius:10px;border:3px solid #c7d2fe;position:relative;background:#fff;overflow:hidden;display:flex;align-items:flex-end}
+  .mercury{width:100%;height:0;background:#ef4444;transition:height 700ms ease}
+  .temp-label{font-size:22px;font-weight:700}
+  .wallet{display:flex;gap:12px;align-items:center}
+  .wallet .box{width:140px;height:80px;border-radius:10px;border:3px solid #c7d2fe;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;max-width:720px}
+  .opt{padding:12px;border-radius:10px;border:2px solid rgba(2,6,23,0.06);cursor:pointer;background:#fff;text-align:center;font-weight:700}
+  .opt.correct{border-color:var(--success);background:linear-gradient(90deg,#ecfdf5,#ffffff);color:var(--success)}
+  .opt.wrong{border-color:var(--danger);background:linear-gradient(90deg,#fff1f2,#ffffff);color:var(--danger)}
+  footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--muted);font-size:13px}
+  @media (max-width:600px){.options{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Game Interaktif: Bilangan Bulat</h1>
+        <p class="lead">Pilih permainan, jawab soal kontekstual (suhu, lift, dompet, garis bilangan). Langsung dapat umpan balik & skor.</p>
+      </div>
+      <div class="flex">
+        <div class="stat card" style="padding:8px 12px;">
+          <div style="font-size:13px;color:var(--muted)">Skor</div>
+          <div class="bubble" id="score">0</div>
+        </div>
+        <button class="btn secondary" id="btnReset">Reset</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;">
+        <label for="mode">Pilih Game:</label>
+        <select id="mode" style="padding:8px;border-radius:8px;border:1px solid #e6eefc;">
+          <option value="numberline">Lompat Garis Bilangan</option>
+          <option value="lift">Lift Misterius</option>
+          <option value="temp">Suhu Panas-Dingin</option>
+          <option value="wallet">Dompet Andi (Untung-Rugi)</option>
+        </select>
+        <div style="margin-left:auto" class="controls">
+          <button class="btn" id="btnNew">Soal Baru</button>
+        </div>
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="question" id="questionText">Tekan "Soal Baru" untuk mulai.</div>
+
+        <div class="visual" id="visualArea" aria-live="polite">
+          <!-- dynamic visuals go here -->
+          <div style="color:var(--muted)">Visual akan muncul di sini</div>
+        </div>
+
+        <div class="options" id="optionsArea" style="display:none"></div>
+      </div>
+
+      <footer>
+        <div id="feedback" style="min-height:20px"></div>
+        <div id="progress">Soal ke <span id="qNo">0</span></div>
+      </footer>
+    </section>
+
+    <section class="card" style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px">
+        <h3 style="margin:0 0 8px 0">Instruksi Singkat</h3>
+        <ul style="margin:0;padding-left:18px;color:var(--muted)">
+          <li>Pilih game lalu klik <strong>Soal Baru</strong>.</li>
+          <li>Pilih jawaban yang benar dari 4 opsi.</li>
+          <li>Skor +10 untuk jawaban benar, -5 untuk jawaban salah.</li>
+          <li>Gunakan tombol Reset untuk mulai ulang skor.</li>
+        </ul>
+      </div>
+      <div style="flex:1;min-width:220px">
+        <h3 style="margin:0 0 8px 0">Konten Soal</h3>
+        <p style="margin:0;color:var(--muted)">Soal dibuat acak dari konteks: suhu (°C), lift (lantai), dompet (Rp), dan garis bilangan (langkah). Setiap soal menampilkan visualisasi sederhana sehingga mudah dipahami siswa.</p>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+(() => {
+  // State
+  let score = 0;
+  let qCount = 0;
+  const scoreEl = document.getElementById('score');
+  const btnNew = document.getElementById('btnNew');
+  const modeSel = document.getElementById('mode');
+  const visualArea = document.getElementById('visualArea');
+  const questionText = document.getElementById('questionText');
+  const optionsArea = document.getElementById('optionsArea');
+  const feedback = document.getElementById('feedback');
+  const qNo = document.getElementById('qNo');
+  const btnReset = document.getElementById('btnReset');
+
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+
+  function updateScore(delta){
+    score += delta;
+    if(score < 0) score = 0;
+    scoreEl.textContent = score;
+  }
+
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  // Render helpers for visuals
+  function renderNumberline(start, steps, target){
+    visualArea.innerHTML = '';
+    const nl = document.createElement('div');
+    nl.className = 'numberline';
+    const from = -10, to = 10;
+    for(let i=from;i<=to;i++){
+      const t = document.createElement('div');
+      t.className = 'tick';
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.textContent = i;
+      if(i === start) dot.style.background = '#fde68a'; // start marker
+      if(i === target) dot.style.background = '#bbf7d0'; // target marker
+      t.appendChild(dot);
+      nl.appendChild(t);
+    }
+    visualArea.appendChild(nl);
+
+    const hint = document.createElement('div');
+    hint.style.color = 'var(--muted)';
+    hint.textContent = `Mulai di ${start}. Lompat ${steps} langkah ke ${ steps>=0 ? 'kanan' : 'kiri' }.`;
+    visualArea.appendChild(hint);
+  }
+
+  function renderLift(startFloor, destFloor){
+    visualArea.innerHTML = '';
+    const info = document.createElement('div');
+    info.style.fontWeight = 700;
+    info.textContent = `Lift: dari lantai ${startFloor} → bergerak`;
+    visualArea.appendChild(info);
+
+    const liftWrap = document.createElement('div');
+    liftWrap.style.display='flex'; liftWrap.style.gap='20px'; liftWrap.style.alignItems='center'; liftWrap.style.marginTop='6px';
+    const floors = document.createElement('div');
+    floors.style.width='80px';
+    floors.style.textAlign='center';
+    floors.style.color='var(--muted)';
+    floors.innerHTML = `<div style="font-size:12px">Lantai</div><div style="font-weight:700;margin-top:8px">${startFloor} → ${destFloor}</div>`;
+    liftWrap.appendChild(floors);
+
+    const liftBox = document.createElement('div');
+    liftBox.className = 'lift';
+    const car = document.createElement('div');
+    car.className = 'car';
+    car.textContent = startFloor;
+    liftBox.appendChild(car);
+    liftWrap.appendChild(liftBox);
+    visualArea.appendChild(liftWrap);
+
+    // animate: change car text to destFloor after small timeout to simulate movement
+    setTimeout(()=> {
+      car.style.transform = `translateY(-40px)`;
+      // update displayed floor (simulate)
+      setTimeout(()=> {
+        car.style.transform = 'translateY(0)';
+        car.textContent = '?';
+      },500);
+    },400);
+  }
+
+  function renderThermometer(start, end){
+    visualArea.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.style.display='flex'; wrap.style.gap='18px'; wrap.style.alignItems='center'; wrap.style.justifyContent='center';
+    const thermo = document.createElement('div'); thermo.className='termometer';
+    const tube = document.createElement('div'); tube.className='thermo-tube';
+    const mercury = document.createElement('div'); mercury.className='mercury';
+    tube.appendChild(mercury);
+    thermo.appendChild(tube);
+    wrap.appendChild(thermo);
+
+    const label = document.createElement('div'); label.style.textAlign='center';
+    const tempLabel = document.createElement('div'); tempLabel.className='temp-label'; tempLabel.textContent = `${start}°C`;
+    const hint = document.createElement('div'); hint.style.color='var(--muted)'; hint.style.fontSize='13px'; hint.textContent = `Naik ${end - start}°`;
+    label.appendChild(tempLabel); label.appendChild(hint);
+    wrap.appendChild(label);
+    visualArea.appendChild(wrap);
+
+    // animate degrees one by one
+    let cur = start;
+    const steps = end - start;
+    let shown = 0;
+    const stepTime = 600;
+    function showNext(){
+      if(shown > Math.abs(steps)) return;
+      if (cur === end) tempLabel.textContent = "?°C"; // jangan tampilkan suhu akhir
+      else tempLabel.textContent = `${cur}°C`;
+      // mercury height: map from [-10..10] to 0..100%
+      const min=-10, max=40; // extend range visually
+      const pct = ((cur - min) / (max - min)) * 100;
+      mercury.style.height = `${Math.max(2, pct)}%`;
+      if(steps > 0) cur++; else cur--;
+      shown++;
+      if(shown<=Math.abs(steps)) setTimeout(showNext, stepTime);
+    }
+    showNext();
+  }
+
+  function renderWallet(start, transaction, end){
+    visualArea.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.style.display='flex'; wrap.style.alignItems='center'; wrap.style.gap='18px';
+    const walletBox = document.createElement('div'); walletBox.className='wallet';
+    const box = document.createElement('div'); box.className='box';
+    box.textContent = formatRupiah(start);
+    walletBox.appendChild(box);
+    wrap.appendChild(walletBox);
+
+    const arrow = document.createElement('div'); arrow.style.color='var(--muted)'; arrow.textContent = '→';
+    wrap.appendChild(arrow);
+
+    const box2 = document.createElement('div'); box2.className='box'; box2.textContent = 'Rp ?'; // sembunyikan jawaban
+    wrap.appendChild(box2);
+    visualArea.appendChild(wrap);
+
+    // animate showing transaction message
+    const msg = document.createElement('div'); msg.style.color='var(--muted)'; msg.style.marginTop='8px';
+    msg.textContent = `${formatRupiah(transaction)} keluar`;
+    visualArea.appendChild(msg);
+  }
+
+  function formatRupiah(num){
+    const sign = num < 0 ? '-' : '';
+    const abs = Math.abs(num);
+    return (sign + 'Rp ' + abs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+  }
+
+  // Question generators
+  function genNumberline(){
+    const start = randInt(-8,8);
+    const steps = randInt(-7,7);
+    const target = start + steps;
+    // ensure target within -10..10
+    if(target < -10 || target > 10) return genNumberline();
+    const text = `Mulai di ${start}. Pindah ${Math.abs(steps)} langkah ke ${steps>=0 ? 'kanan' : 'kiri'}. Berapa angka akhir?`;
+    // options compute
+    const correct = target;
+    const choices = new Set([correct]);
+    while(choices.size < 4){
+      choices.add(correct + randInt(-5,5));
+    }
+    const arr = shuffle(Array.from(choices)).slice(0,4);
+    return {type:'numberline', text, visual: ()=> renderNumberline(start, steps, target), correct, options: arr};
+  }
+
+  function genLift(){
+    const start = randInt(-3,3);
+    const up = randInt(-5,6); // can be negative (go down)
+    const dest = start + up;
+    if(dest < -6 || dest > 12) return genLift();
+    const verb = up>=0 ? `naik ${up} lantai` : `turun ${Math.abs(up)} lantai`;
+    const text = `Lift berada di lantai ${start}. Lift ${verb}. Lift berhenti di lantai berapa?`;
+    const correct = dest;
+    const choices = new Set([correct]);
+    while(choices.size < 4) choices.add(correct + randInt(-4,4));
+    const arr = shuffle(Array.from(choices)).slice(0,4);
+    return {type:'lift', text, visual: ()=> renderLift(start, dest), correct, options: arr};
+  }
+
+  function genTemp(){
+    const start = randInt(-6,2);
+    const rise = randInt(1,9); // mostly rise examples
+    const end = start + rise;
+    const text = `Di pagi hari suhu ${start}°C. Suhu naik ${rise}°C. Berapa suhu siang hari?`;
+    const correct = end;
+    const choices = new Set([correct]);
+    while(choices.size < 4) choices.add(correct + randInt(-6,6));
+    const arr = shuffle(Array.from(choices)).slice(0,4);
+    return {type:'temp', text, visual: ()=> renderThermometer(start,end), correct, options: arr};
+  }
+
+  function genWallet(){
+    const start = [10000,15000,20000,5000][randInt(0,3)];
+    const transaction = -[5000,7000,12000,15000][randInt(0,3)];
+    const end = start + transaction;
+    const text = `${formatRupiah(start)} di dompet. Andi mengeluarkan ${formatRupiah(Math.abs(transaction))}. Berapa saldo akhir?`;
+    const correct = end;
+    const choices = new Set([correct]);
+    while(choices.size < 4) choices.add(correct + (randInt(-3,3)*5000));
+    const arr = shuffle(Array.from(choices)).slice(0,4);
+    return {type:'wallet', text, visual: ()=> renderWallet(start,transaction,end), correct, options: arr};
+  }
+
+  function buildOptions(options, correct){
+    optionsArea.innerHTML = '';
+    optionsArea.style.display = 'grid';
+    options.forEach(opt => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.textContent = (typeof opt === 'number' ? opt.toString() : opt);
+      b.setAttribute('data-val', opt);
+      b.addEventListener('click', ()=> handleAnswer(b, +opt, correct));
+      optionsArea.appendChild(b);
+    });
+  }
+
+  function handleAnswer(btn, val, correct){
+    // disable all
+    Array.from(optionsArea.children).forEach(c=> c.disabled = true);
+    if(val === correct){
+      btn.classList.add('correct');
+      feedback.innerHTML = `<span style="color:var(--success);font-weight:700">Benar!</span> +10 poin`;
+      updateScore(10);
+    } else {
+      btn.classList.add('wrong');
+      // highlight correct
+      Array.from(optionsArea.children).forEach(c=>{
+        if(+c.getAttribute('data-val') === correct) c.classList.add('correct');
+      });
+      feedback.innerHTML = `<span style="color:var(--danger);font-weight:700">Salah.</span> Jawaban: <strong>${correct}</strong> (-5 poin)`;
+      updateScore(-5);
+    }
+  }
+
+  // Main new question dispatcher
+  function newQuestion(){
+    qCount++;
+    qNo.textContent = qCount;
+    feedback.textContent = '';
+    optionsArea.style.display = 'none';
+    optionsArea.innerHTML = '';
+
+    const mode = modeSel.value;
+    let qObj;
+    if(mode === 'numberline') qObj = genNumberline();
+    else if(mode === 'lift') qObj = genLift();
+    else if(mode === 'temp') qObj = genTemp();
+    else qObj = genWallet();
+
+    questionText.textContent = qObj.text;
+    // render visual then show options after a short delay so animation visible
+    qObj.visual();
+    // show options (numbers) after 700ms
+    setTimeout(()=> {
+      buildOptions(qObj.options, qObj.correct);
+    },700);
+  }
+
+  // Attach events
+  btnNew.addEventListener('click', newQuestion);
+  btnReset.addEventListener('click', ()=> {
+    score = 0; qCount = 0;
+    scoreEl.textContent = score;
+    qNo.textContent = qCount;
+    questionText.textContent = 'Tekan "Soal Baru" untuk mulai.';
+    visualArea.innerHTML = '<div style="color:var(--muted)">Visual akan muncul di sini</div>';
+    optionsArea.innerHTML = ''; optionsArea.style.display='none';
+    feedback.textContent = '';
+  });
+
+  // init
+  scoreEl.textContent = score;
+  qNo.textContent = qCount;
+})();
+</script>
+</body>
+</html>
